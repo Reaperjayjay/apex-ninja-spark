@@ -8,59 +8,59 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Apex News Ninja Design System - Dark Theme */
-    --background: 0 0% 0%;
+    /* APEX AI Studios Design System - Dark Theme */
+    --background: 0 0% 4%; /* Deep Graphite #0A0A0A */
     --foreground: 0 0% 100%;
 
-    --card: 216 40% 6%;
+    --card: 0 0% 6%;
     --card-foreground: 0 0% 100%;
 
-    --popover: 216 40% 6%;
+    --popover: 0 0% 6%;
     --popover-foreground: 0 0% 100%;
 
-    /* Brand Colors */
-    --primary: 194 100% 50%; /* Cyan #00D4FF */
+    /* APEX Brand Colors */
+    --primary: 195 100% 50%; /* Cyber Blue #00BFFF */
     --primary-foreground: 0 0% 0%;
 
-    --secondary: 211 100% 40%; /* Blue #0066CC */
+    --secondary: 211 100% 40%; /* Blue Accent */
     --secondary-foreground: 0 0% 100%;
 
-    --accent: 153 100% 50%; /* Green #00ff88 */
+    --accent: 195 100% 50%; /* Matching Blue for consistency */
     --accent-foreground: 0 0% 0%;
 
-    --muted: 216 40% 6%;
-    --muted-foreground: 210 14% 66%; /* Gray #a0aec0 */
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%; /* Gray */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 194 100% 50% / 0.2;
+    --border: 195 100% 50% / 0.15;
     --input: 0 0% 100% / 0.1;
-    --ring: 194 100% 50%;
+    --ring: 195 100% 50%;
 
     --radius: 0.75rem;
 
-    /* Navy background */
-    --navy: 216 40% 6%; /* #0a0f1c */
+    /* Deep Graphite background */
+    --navy: 0 0% 6%;
     
     /* Gradients */
     --gradient-brand: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
     --gradient-text: linear-gradient(135deg, hsl(0 0% 100%), hsl(var(--primary)) 60%, hsl(var(--accent)) 100%);
     --gradient-border: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
     
-    /* Shadows */
-    --shadow-cyan: 0 0 20px hsl(var(--primary) / 0.5);
-    --shadow-cyan-lg: 0 8px 25px hsl(var(--primary) / 0.6);
-    --shadow-glow: 0 0 10px hsl(var(--primary));
+    /* Shadows with Cyber Blue Glow */
+    --shadow-cyan: 0 0 25px hsl(var(--primary) / 0.4);
+    --shadow-cyan-lg: 0 10px 40px hsl(var(--primary) / 0.5);
+    --shadow-glow: 0 0 15px hsl(var(--primary) / 0.6);
 
-    --sidebar-background: 216 40% 6%;
+    --sidebar-background: 0 0% 6%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 194 100% 50%;
+    --sidebar-primary: 195 100% 50%;
     --sidebar-primary-foreground: 0 0% 0%;
     --sidebar-accent: 0 0% 100% / 0.05;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 194 100% 50% / 0.2;
-    --sidebar-ring: 194 100% 50%;
+    --sidebar-border: 195 100% 50% / 0.15;
+    --sidebar-ring: 195 100% 50%;
   }
 }
 

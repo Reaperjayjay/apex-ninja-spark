@@ -1,29 +1,43 @@
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import apexLogo from "@/assets/apex-ai-studios-logo.png";
 
 interface LogoProps {
   showSubtitle?: boolean;
   className?: string;
+  variant?: "full" | "compact";
 }
 
-export const Logo = ({ showSubtitle = true, className }: LogoProps) => {
+export const Logo = ({ showSubtitle = true, className, variant = "full" }: LogoProps) => {
   return (
-    <Link to="/" className={cn("flex items-center gap-3", className)}>
+    <Link to="/" className={cn("flex items-center gap-3 group", className)}>
       <div 
-        className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-2xl"
+        className="flex items-center justify-center transition-all duration-300"
         style={{
-          background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))',
-          boxShadow: '0 0 20px hsl(var(--primary) / 0.5)'
+          filter: 'drop-shadow(0 0 12px hsl(var(--primary) / 0.6))'
         }}
       >
-        A
+        <img 
+          src={apexLogo} 
+          alt="APEX AI Studios" 
+          className={cn(
+            "transition-all duration-300 group-hover:scale-105",
+            variant === "compact" ? "h-10 w-10" : "h-12 w-12"
+          )}
+        />
       </div>
-      <div className="flex flex-col">
-        <span className="text-lg font-extrabold tracking-wide">APEX NEWS NINJA</span>
-        {showSubtitle && (
-          <span className="text-[0.7rem] text-muted-foreground">AI-Powered News</span>
-        )}
-      </div>
+      {variant === "full" && (
+        <div className="flex flex-col">
+          <span className="text-base sm:text-lg font-extrabold tracking-wide text-foreground">
+            APEX NEWS NINJA
+          </span>
+          {showSubtitle && (
+            <span className="text-[0.65rem] sm:text-[0.7rem] text-muted-foreground font-medium">
+              by APEX AI Studios
+            </span>
+          )}
+        </div>
+      )}
     </Link>
   );
 };

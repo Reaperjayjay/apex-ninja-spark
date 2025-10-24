@@ -71,22 +71,23 @@ const Index = () => {
         animate={{ y: 0 }}
         className={`fixed top-0 w-full z-[1000] transition-all duration-300 ${
           scrolled 
-            ? 'py-3 bg-card/95 backdrop-blur-xl shadow-lg' 
-            : 'py-5 bg-card/80 backdrop-blur-xl'
+            ? 'py-2 sm:py-3 bg-card/95 backdrop-blur-xl shadow-lg' 
+            : 'py-3 sm:py-5 bg-card/80 backdrop-blur-xl'
         } border-b border-primary/20`}
       >
-        <nav className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-          <Logo />
-          <div className="flex items-center gap-8">
-            <a href="#features" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center">
+          <Logo variant="full" />
+          <div className="flex items-center gap-3 sm:gap-6 lg:gap-8">
+            <a href="#features" className="hidden sm:inline text-sm text-muted-foreground hover:text-primary transition-colors font-medium">
               Features
             </a>
-            <a href="#how-it-works" className="text-muted-foreground hover:text-primary transition-colors font-medium">
+            <a href="#how-it-works" className="hidden sm:inline text-sm text-muted-foreground hover:text-primary transition-colors font-medium">
               How It Works
             </a>
             <Button
               onClick={() => navigate('/auth')}
-              className="bg-gradient-to-br from-primary to-secondary text-black font-bold hover:shadow-lg hover:shadow-primary/50 transition-all"
+              className="bg-gradient-to-br from-primary to-primary/80 text-background font-bold hover:shadow-lg hover:shadow-primary/50 transition-all h-8 sm:h-9 text-xs sm:text-sm px-3 sm:px-4"
+              style={{ boxShadow: '0 4px 20px hsl(var(--primary) / 0.3)' }}
             >
               Get Started
             </Button>
