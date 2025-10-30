@@ -85,7 +85,7 @@ const Index = () => {
               How It Works
             </a>
             <Button
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/login')}
               className="bg-gradient-to-br from-primary to-primary/80 text-background font-bold hover:shadow-lg hover:shadow-primary/50 transition-all h-8 sm:h-9 text-xs sm:text-sm px-3 sm:px-4"
               style={{ boxShadow: '0 4px 20px hsl(var(--primary) / 0.3)' }}
             >
@@ -99,41 +99,34 @@ const Index = () => {
       <section className="relative min-h-screen flex items-center justify-center px-6 pt-32 pb-20 z-10">
         <div className="max-w-6xl mx-auto text-center">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.45 }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
-              <Zap className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold text-primary">AI-Powered News Platform</span>
-            </div>
-            
-            <h1 className="text-6xl md:text-7xl font-black mb-6 gradient-text leading-tight">
-              Your Personal News <br />Ninja on WhatsApp
-            </h1>
-            
-            <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-              Get AI-curated news summaries from multiple domains delivered directly to your WhatsApp. 
-              Stay informed without the information overload.
-            </p>
+            <GlassCard className="max-w-4xl mx-auto">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-6">
+                <Zap className="w-4 h-4 text-primary" />
+                <span className="text-sm font-semibold text-primary">AI-Powered News Platform</span>
+              </div>
 
-            <div className="flex gap-4 justify-center">
+              <h1 className="text-5xl md:text-6xl font-black mb-6 gradient-text leading-tight">
+                Get Your Personalized WhatsApp News Aggregator Now
+              </h1>
+
+              <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+                AI-curated news summaries from multiple domains delivered directly to your WhatsApp.
+                Stay informed without the information overload.
+              </p>
+
               <Button
                 size="lg"
-                onClick={() => navigate('/auth')}
+                onClick={() => navigate('/login')}
                 className="bg-gradient-to-br from-primary to-secondary text-black font-bold text-lg px-8 hover:shadow-xl hover:shadow-primary/50 transition-all group"
               >
-                Start Free Trial
+                Try Apex News Ninja
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-primary/50 text-primary hover:bg-primary/10 font-semibold text-lg px-8"
-              >
-                Watch Demo
-              </Button>
-            </div>
+            </GlassCard>
           </motion.div>
         </div>
       </section>
@@ -254,7 +247,7 @@ const Index = () => {
           >
             <Button
               size="lg"
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate('/login')}
               className="bg-gradient-to-br from-primary to-secondary text-black font-bold text-lg px-12 hover:shadow-xl hover:shadow-primary/50 transition-all"
             >
               Get Started Now
