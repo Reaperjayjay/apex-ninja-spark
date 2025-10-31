@@ -3,6 +3,7 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useRef, useState, useEffect } from "react";
 import {
   Code,
   Briefcase,
@@ -14,7 +15,9 @@ import {
   Music,
   Bitcoin,
   TrendingUp,
-  Check
+  Check,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { useNiche } from "@/context/NicheContext";
 import { toast } from "sonner";
@@ -35,6 +38,43 @@ const niches = [
 const NicheSelect = () => {
   const navigate = useNavigate();
   const { selectedNiches, toggleNiche } = useNiche();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkScroll = () => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      setCanScrollLeft(container.scrollLeft > 0);
+      setCanScrollRight(
+        container.scrollLeft < container.scrollWidth - container.clientWidth - 10
+      );
+    }
+  };
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      checkScroll();
+      container.addEventListener('scroll', checkScroll);
+      window.addEventListener('resize', checkScroll);
+      return () => {
+        container.removeEventListener('scroll', checkScroll);
+        window.removeEventListener('resize', checkScroll);
+      };
+    }
+  }, []);
+
+  const scroll = (direction: 'left' | 'right') => {
+    const container = scrollContainerRef.current;
+    if (container) {
+      const scrollAmount = 300;
+      container.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   const handleContinue = () => {
     if (selectedNiches.length === 0) {
@@ -69,9 +109,48 @@ const NicheSelect = () => {
             </p>
           </div>
 
-          <div className="w-full mb-12 overflow-hidden">
-            <div className="overflow-x-auto flex gap-4 snap-x snap-mandatory pb-4 scrollbar-hidden">
-              {niches.map((niche, index) => {
+          <div className="w-full mb-12 relative group">
+            <motion.button
+              onClick={() => scroll('left')}
+              disabled={!canScrollLeft}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              className={`absolute left-0 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full backdrop-blur-xl transition-all duration-300 ${
+                canScrollLeft
+                  ? 'bg-white/20 hover:bg-white/40 cursor-pointer'
+                  : 'bg-white/5 opacity-40 cursor-not-allowed'
+              }`}
+              style={{
+                boxShadow: canScrollLeft ? '0 4px 15px hsl(var(--primary) / 0.2)' : 'none'
+              }}
+            >
+              <ChevronLeft className="w-6 h-6 text-primary" />
+            </motion.button>
+
+            <motion.button
+              onClick={() => scroll('right')}
+              disabled={!canScrollRight}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              className={`absolute right-0 top-1/2 -translate-y-1/2 z-20 p-3 rounded-full backdrop-blur-xl transition-all duration-300 ${
+                canScrollRight
+                  ? 'bg-white/20 hover:bg-white/40 cursor-pointer'
+                  : 'bg-white/5 opacity-40 cursor-not-allowed'
+              }`}
+              style={{
+                boxShadow: canScrollRight ? '0 4px 15px hsl(var(--primary) / 0.2)' : 'none'
+              }}
+            >
+              <ChevronRight className="w-6 h-6 text-primary" />
+            </motion.button>
+
+            <div className="overflow-hidden px-16">
+              <div
+                ref={scrollContainerRef}
+                className="overflow-x-auto flex gap-4 snap-x snap-mandatory pb-4 scrollbar-hidden"
+                onScroll={checkScroll}
+              >
+                {niches.map((niche, index) => {
                 const isSelected = selectedNiches.includes(niche.id);
 
                 return (
@@ -124,6 +203,7 @@ const NicheSelect = () => {
                   </motion.button>
                 );
               })}
+              </div>
             </div>
           </div>
 
