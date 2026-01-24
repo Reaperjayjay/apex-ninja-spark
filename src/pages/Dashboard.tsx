@@ -1,6 +1,7 @@
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
+// We removed Card imports because NewsCard handles the UI now
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -12,8 +13,6 @@ import {
   User,
   Bell,
   Search,
-  ChevronRight,
-  ExternalLink,
   Menu,
   LogOut,
   Briefcase,
@@ -22,35 +21,90 @@ import {
   TrendingDown,
   Code,
   GraduationCap,
-  Music
+  Music,
+  RefreshCw,
+  AlertCircle
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import newsData from "@/data/news.json";
 
-interface NewsItem {
-  id: string;
+// 1. IMPORT THE NEW COMPONENT
+import { NewsCard } from "@/components/NewsCard";
+
+// 2. UPDATE INTERFACE TO MATCH BACKEND & NEWS CARD
+interface Article {
+  _id: string; // Changed from 'id' to '_id' to match MongoDB
   title: string;
-  snippet: string;
-  source: string;
-  category: string;
-  time: string;
+  description: string | null;
+  content: string | null;
   url: string;
+  image_url: string | null;
+  source: string;
+  author: string | null;
+  category: string;
+  published_at: string;
+  fetched_at: string;
+  view_count: number;
+  click_count: number;
+
+  // New AI Fields
+  ai_processed?: boolean;
+  sentiment?: 'Bullish' | 'Bearish' | 'Neutral';
+  summary?: string;
+  key_points?: string[];
 }
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { isLoggedIn, logout } = useAuth();
+  const { logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [news, setNews] = useState<NewsItem[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalArticles, setTotalArticles] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      navigate('/login');
-      return;
+    fetchNews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  const fetchNews = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const token = localStorage.getItem('token');
+
+      // Note: If testing locally without login, you can comment out this check
+      if (!token) {
+        setError('Session expired. Please refresh.');
+        // return; // Uncomment to force login
+      }
+
+      const response = await fetch(`http://127.0.0.1:8000/api/v1/news/feed?page=${page}&page_size=20`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (data.status === 'success') {
+        setArticles(data.data.items || data.data.articles); // Handle both potential response structures
+        setTotalArticles(data.data.total);
+      } else {
+        setError(data.message || 'Failed to load news');
+      }
+    } catch (err) {
+      console.error('Error fetching news:', err);
+      setError('Failed to connect to backend. Make sure it\'s running on port 8000.');
+    } finally {
+      setLoading(false);
     }
-    setNews(newsData as NewsItem[]);
-  }, [isLoggedIn, navigate]);
+  };
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Newspaper, path: '/dashboard' },
@@ -72,11 +126,8 @@ const Dashboard = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
-  };
-
-  const handleArticleClick = (url: string) => {
-    window.open(url, '_blank', 'noopener,noreferrer');
+    localStorage.removeItem('token');
+    navigate('/auth');
   };
 
   useEffect(() => {
@@ -88,6 +139,53 @@ const Dashboard = () => {
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [sidebarOpen]);
+
+  // Loading State
+  if (loading && articles.length === 0) {
+    return (
+      <div className="min-h-screen relative">
+        <AnimatedBackground />
+        <div className="relative z-[2] min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <RefreshCw className="w-16 h-16 text-primary animate-spin mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-2">Loading Your News Feed...</h2>
+            <p className="text-muted-foreground">Fetching latest AI insights</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error State
+  if (error && articles.length === 0) {
+    return (
+      <div className="min-h-screen relative">
+        <AnimatedBackground />
+        <div className="relative z-[2] min-h-screen flex items-center justify-center p-6">
+          <Card className="max-w-md w-full glass border-destructive/50">
+            <CardHeader>
+              <div className="flex items-center gap-3 mb-2">
+                <AlertCircle className="w-8 h-8 text-destructive" />
+                <CardTitle className="text-destructive">Connection Error</CardTitle>
+              </div>
+              <CardDescription className="text-base">{error}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-2">
+                <Button onClick={fetchNews} className="flex-1">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Retry
+                </Button>
+                <Button onClick={() => navigate('/login')} variant="outline" className="flex-1">
+                  Login Again
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative">
@@ -160,13 +258,24 @@ const Dashboard = () => {
               <Logo variant="compact" />
             </div>
 
-            <Button
-              className="bg-gradient-to-br from-primary to-primary/80 text-background font-bold hover:shadow-lg hover:shadow-primary/50 transition-all"
-              style={{ boxShadow: '0 4px 20px hsl(var(--primary) / 0.3)' }}
-            >
-              <Bell className="w-5 h-5 sm:mr-2" />
-              <span className="hidden sm:inline">Notifications</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={fetchNews}
+                variant="ghost"
+                size="sm"
+                className="mr-2"
+                disabled={loading}
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+              <Button
+                className="bg-gradient-to-br from-primary to-primary/80 text-background font-bold hover:shadow-lg hover:shadow-primary/50 transition-all"
+                style={{ boxShadow: '0 4px 20px hsl(var(--primary) / 0.3)' }}
+              >
+                <Bell className="w-5 h-5 sm:mr-2" />
+                <span className="hidden sm:inline">Notifications</span>
+              </Button>
+            </div>
           </div>
         </header>
 
@@ -181,7 +290,7 @@ const Dashboard = () => {
               Your News Feed
             </h1>
             <p className="text-muted-foreground">
-              Stay informed with AI-curated updates
+              {totalArticles} articles analyzed by AI
             </p>
           </motion.div>
 
@@ -190,6 +299,8 @@ const Dashboard = () => {
             <input
               type="text"
               placeholder="Search news articles..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full h-14 pl-12 pr-6 bg-card/80 backdrop-blur-xl rounded-xl border border-primary/20 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-foreground placeholder:text-muted-foreground"
               style={{ boxShadow: '0 2px 15px hsl(var(--primary) / 0.08)' }}
             />
@@ -197,9 +308,9 @@ const Dashboard = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {[
-              { label: "Articles Today", value: news.length.toString(), icon: Newspaper, change: "+12%" },
-              { label: "Trending Topics", value: "8", icon: TrendingUp, change: "+3" },
-              { label: "Read Time", value: "18m", icon: Clock, change: "avg" }
+              { label: "Articles Today", value: totalArticles.toString(), icon: Newspaper, change: `${articles.length} loaded` },
+              { label: "AI Analysis", value: "Active", icon: Brain, change: "sentiment enabled" },
+              { label: "Updated", value: loading ? "..." : "Now", icon: Clock, change: "live" }
             ].map((stat, index) => (
               <motion.div
                 key={stat.label}
@@ -244,56 +355,35 @@ const Dashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {news.map((article, index) => (
-              <motion.div
-                key={article.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1, duration: 0.4 }}
-                whileHover={{ y: -2, transition: { duration: 0.2 } }}
-              >
-                <Card
-                  className="glass border-primary/15 cursor-pointer hover:border-primary/40 transition-all hover:shadow-lg group h-full"
-                  onClick={() => handleArticleClick(article.url)}
-                  style={{ boxShadow: '0 2px 15px hsl(var(--primary) / 0.08)' }}
+            {articles
+              .filter(article =>
+                searchQuery === '' ||
+                article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                article.description?.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+              .map((article, index) => (
+                <motion.div
+                  key={article._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05, duration: 0.4 }}
+                  whileHover={{ y: -2, transition: { duration: 0.2 } }}
+                  className="h-full"
                 >
-                  <CardHeader>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="px-2.5 py-1 bg-primary/20 text-primary text-xs font-bold rounded-full">
-                        {article.category}
-                      </span>
-                      <span className="text-xs text-muted-foreground">{article.time}</span>
-                    </div>
-                    <CardTitle className="text-lg group-hover:text-primary transition-colors line-clamp-2">
-                      {article.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="line-clamp-3 mb-4">
-                      {article.snippet}
-                    </CardDescription>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">{article.source}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-primary hover:text-primary hover:bg-primary/10"
-                      >
-                        <ChevronRight className="w-4 h-4 ml-1" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                  {/* 3. REPLACED THE OLD CARD WITH NEWS CARD */}
+                  <NewsCard article={article} />
+                </motion.div>
+              ))}
           </div>
 
           <div className="text-center mt-12">
             <Button
+              onClick={() => setPage(p => p + 1)}
               variant="outline"
               className="border-primary/20 hover:bg-primary/10 hover:border-primary/40 px-8"
+              disabled={loading}
             >
-              Load More Articles
+              {loading ? 'Loading...' : 'Load More Articles'}
             </Button>
           </div>
         </main>
@@ -301,12 +391,8 @@ const Dashboard = () => {
 
       <style>{`
         @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.7;
-          }
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
         }
       `}</style>
     </div>
