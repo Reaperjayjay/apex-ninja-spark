@@ -49,7 +49,12 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
-    const baseUrl = "http://127.0.0.1:8000/api/v1/auth";
+    // FIXED: Auto-switch between Localhost and Live Backend
+    const API_BASE_URL = window.location.hostname === 'localhost'
+      ? "http://localhost:8000"
+      : "https://apex-news-ninja-backend.vercel.app";
+
+    const baseUrl = `${API_BASE_URL}/api/v1/auth`;
     const endpoint = isLogin ? "/login" : "/register";
     const url = `${baseUrl}${endpoint}`;
 
