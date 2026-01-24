@@ -11,6 +11,10 @@ import { Brain, Zap, Target, Mail, Lock, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 
+interface ValidationError {
+  msg: string;
+}
+
 const Auth = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -49,7 +53,7 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
-    // FIXED: Auto-switch between Localhost and Live Backend
+    // Auto-switch between Localhost and Live Backend
     const API_BASE_URL = window.location.hostname === 'localhost'
       ? "http://localhost:8000"
       : "https://apex-news-ninja-backend.vercel.app";
@@ -111,7 +115,7 @@ const Auth = () => {
         // If validation error (422), try to show specific field error
         if (response.status === 422 && data.detail) {
           const errorMsg = Array.isArray(data.detail)
-            ? data.detail.map((e: any) => e.msg).join(", ")
+            ? data.detail.map((e: ValidationError) => e.msg).join(", ")
             : JSON.stringify(data.detail);
           toast.error("Validation Error: " + errorMsg);
         } else {
