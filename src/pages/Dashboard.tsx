@@ -1,7 +1,6 @@
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-// We removed Card imports because NewsCard handles the UI now
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -27,13 +26,11 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-
-// 1. IMPORT THE NEW COMPONENT
 import { NewsCard } from "@/components/NewsCard";
+import { API_BASE_URL } from "@/lib/api";
 
-// 2. UPDATE INTERFACE TO MATCH BACKEND & NEWS CARD
 interface Article {
-  _id: string; // Changed from 'id' to '_id' to match MongoDB
+  _id: string;
   title: string;
   description: string | null;
   content: string | null;
@@ -46,8 +43,6 @@ interface Article {
   fetched_at: string;
   view_count: number;
   click_count: number;
-
-  // New AI Fields
   ai_processed?: boolean;
   sentiment?: 'Bullish' | 'Bearish' | 'Neutral';
   summary?: string;
@@ -77,13 +72,13 @@ const Dashboard = () => {
 
       const token = localStorage.getItem('token');
 
-      // Note: If testing locally without login, you can comment out this check
       if (!token) {
         setError('Session expired. Please refresh.');
-        // return; // Uncomment to force login
+        // navigate('/auth'); // Optional: Auto-redirect
       }
 
-      const response = await fetch(`http://127.0.0.1:8000/api/v1/news/feed?page=${page}&page_size=20`, {
+      // FIXED: Uses API_BASE_URL from @/lib/api to connect to Cloud Backend
+      const response = await fetch(`${API_BASE_URL}/api/v1/news/feed?page=${page}&page_size=20`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -92,15 +87,22 @@ const Dashboard = () => {
 
       const data = await response.json();
 
-      if (data.status === 'success') {
-        setArticles(data.data.items || data.data.articles); // Handle both potential response structures
-        setTotalArticles(data.data.total);
+      if (response.ok && data.status === 'success') {
+        // Handle variations in backend response structure
+        setArticles(data.data.items || data.data.articles || []);
+        setTotalArticles(data.data.total || 0);
       } else {
+        // If 401 Unauthorized, log out
+        if (response.status === 401) {
+          logout();
+          navigate('/auth');
+          return;
+        }
         setError(data.message || 'Failed to load news');
       }
     } catch (err) {
       console.error('Error fetching news:', err);
-      setError('Failed to connect to backend. Make sure it\'s running on port 8000.');
+      setError('Failed to connect to backend. Please check your internet connection.');
     } finally {
       setLoading(false);
     }
@@ -176,7 +178,7 @@ const Dashboard = () => {
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Retry
                 </Button>
-                <Button onClick={() => navigate('/login')} variant="outline" className="flex-1">
+                <Button onClick={() => navigate('/auth')} variant="outline" className="flex-1">
                   Login Again
                 </Button>
               </div>
@@ -370,7 +372,6 @@ const Dashboard = () => {
                   whileHover={{ y: -2, transition: { duration: 0.2 } }}
                   className="h-full"
                 >
-                  {/* 3. REPLACED THE OLD CARD WITH NEWS CARD */}
                   <NewsCard article={article} />
                 </motion.div>
               ))}
