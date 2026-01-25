@@ -10,6 +10,7 @@ import { useState } from "react";
 import { Brain, Zap, Target, Mail, Lock, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { AUTH_ENDPOINTS } from "@/lib/api";
 
 interface ValidationError {
   msg: string;
@@ -19,7 +20,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [isLogin, setIsLogin] = useState(false); // Default to Register for this page
+  const [isLogin, setIsLogin] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -53,17 +54,10 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Auto-switch between Localhost and Live Backend
-    const API_BASE_URL = window.location.hostname === 'localhost'
-      ? "http://localhost:8000"
-      : "https://apex-news-ninja-backend.vercel.app";
-
-    const baseUrl = `${API_BASE_URL}/api/v1/auth`;
-    const endpoint = isLogin ? "/login" : "/register";
-    const url = `${baseUrl}${endpoint}`;
+    // Use centralized endpoints from api.ts
+    const url = isLogin ? AUTH_ENDPOINTS.LOGIN : AUTH_ENDPOINTS.REGISTER;
 
     try {
-      // Generate a unique username to avoid conflicts during registration
       const randomSuffix = Math.floor(Math.random() * 10000);
       const generatedUsername = formData.email.split('@')[0] + randomSuffix;
 
@@ -76,8 +70,8 @@ const Auth = () => {
           email: formData.email,
           password: formData.password,
           full_name: formData.name,
-          username: generatedUsername, // Use unique username
-          phone_number: "0000000000"   // Default phone if not asked in UI
+          username: generatedUsername,
+          phone_number: "0000000000"
         };
 
       const response = await fetch(url, {
@@ -89,30 +83,19 @@ const Auth = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // --- SUCCESS ---
-        // If the backend returns a token immediately after register (or login), use it.
         if (data.data && data.data.access_token) {
           const token = data.data.access_token;
-
-          // Update Context and Storage
           localStorage.setItem("token", token);
           if (login) login(token);
 
           toast.success(isLogin ? "Login successful!" : "Account created!");
-
-          // Navigate to Dashboard
           navigate('/dashboard');
         } else if (!isLogin) {
-          // Fallback: If register succeeded but didn't send a token, ask user to log in
           toast.success("Account created! Please sign in.");
           setIsLogin(true);
         }
-
       } else {
-        // --- ERROR HANDLING ---
         console.error("Auth Error:", data);
-
-        // If validation error (422), try to show specific field error
         if (response.status === 422 && data.detail) {
           const errorMsg = Array.isArray(data.detail)
             ? data.detail.map((e: ValidationError) => e.msg).join(", ")
@@ -124,7 +107,7 @@ const Auth = () => {
       }
     } catch (error) {
       console.error("Network Error:", error);
-      toast.error("Could not connect to server. Is Backend running?");
+      toast.error("Failed to connect. Check console for details.");
     } finally {
       setLoading(false);
     }

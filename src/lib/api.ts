@@ -1,8 +1,11 @@
-// AUTOMATICALLY SWITCH: Uses localhost if you are running locally, 
-// otherwise uses your live Vercel Backend.
-export const API_BASE_URL = window.location.hostname === 'localhost'
-    ? "http://localhost:8000"
-    : "https://apex-news-ninja-backend.vercel.app";
+// Hardcoded Cloud URL to ensure connection to the live backend
+export const API_BASE_URL = "https://apex-news-ninja-backend.vercel.app";
+
+// Endpoints specifically for the Auth component
+export const AUTH_ENDPOINTS = {
+    LOGIN: `${API_BASE_URL}/api/v1/auth/login`,
+    REGISTER: `${API_BASE_URL}/api/v1/auth/register`,
+};
 
 export type ApiError = {
     message: string;
