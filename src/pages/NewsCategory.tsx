@@ -2,7 +2,7 @@ import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { useNavigate, useParams } from "react-router-dom"; // <--- Added useParams
+import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Clock,
@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
-// Define the Article Interface (Same as Dashboard)
+// Define the Article Interface
 interface Article {
   id: string;
   title: string;
@@ -30,7 +30,7 @@ interface Article {
 }
 
 const NewsCategory = () => {
-  const { category } = useParams(); // <--- This grabs "ai", "tech", etc. from the URL
+  const { category } = useParams();
   const navigate = useNavigate();
 
   const [articles, setArticles] = useState<Article[]>([]);
@@ -39,14 +39,13 @@ const NewsCategory = () => {
   const [page, setPage] = useState(1);
   const [totalArticles, setTotalArticles] = useState(0);
 
-  // Capitalize category for display (e.g., "ai" -> "Ai" or "AI")
+  // Capitalize category for display
   const displayCategory = category ? category.charAt(0).toUpperCase() + category.slice(1) : "News";
 
   useEffect(() => {
-    // Reset page and articles when category changes
     setArticles([]);
     setPage(1);
-    fetchCategoryNews(1); // Fetch page 1
+    fetchCategoryNews(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category]);
 
@@ -56,13 +55,11 @@ const NewsCategory = () => {
       setError(null);
 
       const token = localStorage.getItem('token');
-      if (!token) return; // ProtectedRoute handles redirect, but safe to check
+      if (!token) return;
 
-      // --- THE API CALL WITH FILTER ---
-      // We pass &categories=... to tell the backend what we want
-      // Note: We use 127.0.0.1 to avoid the connection error
+      // --- FIX: USE VERCEL URL & LOWERCASE CATEGORY ---
       const response = await fetch(
-        `http://127.0.0.1:8000/api/v1/news/feed?page=${pageNumber}&page_size=20&categories=${category}`,
+        `https://apex-news-ninja-backend.vercel.app/api/v1/news/feed?page=${pageNumber}&page_size=20&categories=${category?.toLowerCase()}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -74,7 +71,6 @@ const NewsCategory = () => {
       const data = await response.json();
 
       if (data.status === 'success') {
-        // If it's page 1, replace. If page > 1, append.
         if (pageNumber === 1) {
           setArticles(data.data.articles);
         } else {
@@ -99,11 +95,11 @@ const NewsCategory = () => {
   };
 
   const handleArticleClick = async (article: Article) => {
-    // Track view
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        await fetch(`http://127.0.0.1:8000/api/v1/news/article/${article.id}/view`, {
+        // --- FIX: USE VERCEL URL HERE TOO ---
+        await fetch(`https://apex-news-ninja-backend.vercel.app/api/v1/news/article/${article.id}/view`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -114,7 +110,6 @@ const NewsCategory = () => {
     } catch (e) {
       console.error("Tracking error", e);
     }
-    // Open article
     window.open(article.url, '_blank', 'noopener,noreferrer');
   };
 
@@ -169,7 +164,7 @@ const NewsCategory = () => {
             <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
               <Newspaper className="w-16 h-16 mb-4 opacity-50" />
               <p>No articles found for {displayCategory} yet.</p>
-              <p className="text-sm">Try running the fetch script backend!</p>
+              <p className="text-sm">Try refreshing the page!</p>
             </div>
           )}
 
