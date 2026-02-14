@@ -77,8 +77,13 @@ const Dashboard = () => {
         // navigate('/auth'); // Optional: Auto-redirect
       }
 
-      // FIXED: Uses API_BASE_URL from @/lib/api to connect to Cloud Backend
-      const response = await fetch(`${API_BASE_URL}/api/v1/news/feed?page=${page}&page_size=20`, {
+      // Construct URL with search query if present
+      let url = `${API_BASE_URL}/api/v1/news/feed?page=${page}&page_size=20`;
+      if (searchQuery) {
+        url += `&keywords=${encodeURIComponent(searchQuery)}`;
+      }
+
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -88,8 +93,12 @@ const Dashboard = () => {
       const data = await response.json();
 
       if (response.ok && data.status === 'success') {
-        // Handle variations in backend response structure
-        setArticles(data.data.items || data.data.articles || []);
+        // If it's page 1 (new search or refresh), replace articles. Else append for pagination.
+        if (page === 1) {
+          setArticles(data.data.items || data.data.articles || []);
+        } else {
+          setArticles(prev => [...prev, ...(data.data.items || data.data.articles || [])]);
+        }
         setTotalArticles(data.data.total || 0);
       } else {
         // If 401 Unauthorized, log out
@@ -105,6 +114,22 @@ const Dashboard = () => {
       setError('Failed to connect to backend. Please check your internet connection.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Search Handlers
+  const handleSearch = () => {
+    setArticles([]); // Clear old results
+    if (page === 1) {
+      fetchNews(); // Force fetch if already on page 1
+    } else {
+      setPage(1); // Changing page triggers useEffect which calls fetchNews
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
     }
   };
 
@@ -296,14 +321,22 @@ const Dashboard = () => {
             </p>
           </motion.div>
 
-          <div className="relative mb-8">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none z-10" />
+          {/* Search Bar Area */}
+          <div className="relative mb-8 group">
+            <button
+              onClick={handleSearch}
+              className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-xl hover:bg-primary/10 text-muted-foreground hover:text-primary transition-all z-10"
+              title="Search"
+            >
+              <Search className="w-5 h-5" />
+            </button>
             <input
               type="text"
-              placeholder="Search news articles..."
+              placeholder="Search news (e.g. 'Bitcoin', 'AI')..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-14 pl-12 pr-6 bg-card/80 backdrop-blur-xl rounded-xl border border-primary/20 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-foreground placeholder:text-muted-foreground"
+              onKeyDown={handleKeyDown}
+              className="w-full h-14 pl-14 pr-6 bg-card/80 backdrop-blur-xl rounded-xl border border-primary/20 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-foreground placeholder:text-muted-foreground"
               style={{ boxShadow: '0 2px 15px hsl(var(--primary) / 0.08)' }}
             />
           </div>
@@ -357,24 +390,18 @@ const Dashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {articles
-              .filter(article =>
-                searchQuery === '' ||
-                article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                article.description?.toLowerCase().includes(searchQuery.toLowerCase())
-              )
-              .map((article, index) => (
-                <motion.div
-                  key={article._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05, duration: 0.4 }}
-                  whileHover={{ y: -2, transition: { duration: 0.2 } }}
-                  className="h-full"
-                >
-                  <NewsCard article={article} />
-                </motion.div>
-              ))}
+            {articles.map((article, index) => (
+              <motion.div
+                key={article._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05, duration: 0.4 }}
+                whileHover={{ y: -2, transition: { duration: 0.2 } }}
+                className="h-full"
+              >
+                <NewsCard article={article} />
+              </motion.div>
+            ))}
           </div>
 
           <div className="text-center mt-12">
