@@ -11,7 +11,7 @@ import { Brain, Zap, Target, Mail, Lock, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { AUTH_ENDPOINTS } from "@/lib/api";
-import { GoogleLogin } from '@react-oauth/google'; // <--- NEW IMPORT
+import { GoogleLogin } from '@react-oauth/google';
 
 interface ValidationError {
   msg: string;
@@ -51,11 +51,9 @@ const Auth = () => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  // --- NEW: Handle Google Login Success ---
   const handleGoogleSuccess = async (credentialResponse: any) => {
     try {
       setLoading(true);
-      // 1. Get the JWT token from Google
       const { credential } = credentialResponse;
 
       if (!credential) {
@@ -63,24 +61,21 @@ const Auth = () => {
         return;
       }
 
-      // 2. Send to YOUR Backend
       const response = await fetch("https://apex-news-ninja-backend.vercel.app/api/v1/auth/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: credential }), // <--- Must match backend expectation
+        body: JSON.stringify({ token: credential }),
       });
 
       const data = await response.json();
 
       if (response.ok && data.status === "success") {
-        // 3. Login Success
         localStorage.setItem("token", data.data.access_token);
         if (login) login(data.data.access_token);
 
         toast.success("Welcome back!");
         navigate("/dashboard");
       } else {
-        // 4. Handle Backend Rejection (Rate limit or Error)
         if (response.status === 429) {
           toast.error("Too many login attempts. Please wait a minute.");
         } else {
@@ -172,8 +167,10 @@ const Auth = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="max-w-xl"
+            className="max-w-xl mt-32"
           >
+            {/* Added mt-32 to push text down on laptops */}
+
             <h1 className="text-4xl lg:text-5xl xl:text-6xl font-black mb-8 lg:mb-12 gradient-text leading-tight">
               Your Personal News Revolution Starts Here
             </h1>
@@ -301,7 +298,6 @@ const Auth = () => {
                   </div>
                 </div>
 
-                {/* --- REAL GOOGLE BUTTON --- */}
                 <div className="flex justify-center w-full">
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
