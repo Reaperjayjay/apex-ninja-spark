@@ -11,6 +11,7 @@ import { Brain, Zap, Target, Mail, Lock, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { AUTH_ENDPOINTS } from "@/lib/api";
+import { GoogleLogin } from '@react-oauth/google'; // <--- NEW IMPORT
 
 interface ValidationError {
   msg: string;
@@ -50,11 +51,54 @@ const Auth = () => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
+  // --- NEW: Handle Google Login Success ---
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    try {
+      setLoading(true);
+      // 1. Get the JWT token from Google
+      const { credential } = credentialResponse;
+
+      if (!credential) {
+        toast.error("Google login failed to retrieve token");
+        return;
+      }
+
+      // 2. Send to YOUR Backend
+      const response = await fetch("https://apex-news-ninja-backend.vercel.app/api/v1/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: credential }), // <--- Must match backend expectation
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.status === "success") {
+        // 3. Login Success
+        localStorage.setItem("token", data.data.access_token);
+        if (login) login(data.data.access_token);
+
+        toast.success("Welcome back!");
+        navigate("/dashboard");
+      } else {
+        // 4. Handle Backend Rejection (Rate limit or Error)
+        if (response.status === 429) {
+          toast.error("Too many login attempts. Please wait a minute.");
+        } else {
+          toast.error(data.detail || "Google Login failed");
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Network error during Google Login");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Use centralized endpoints from api.ts
     const url = isLogin ? AUTH_ENDPOINTS.LOGIN : AUTH_ENDPOINTS.REGISTER;
 
     try {
@@ -118,7 +162,7 @@ const Auth = () => {
       <AnimatedBackground />
 
       <div className="relative z-10 min-h-screen grid lg:grid-cols-2">
-        {/* Left Panel - Features */}
+        {/* Left Panel */}
         <div className="hidden lg:flex flex-col justify-center p-12 lg:p-16 xl:p-20 relative">
           <div className="absolute top-8 lg:top-12 left-8 lg:left-12 xl:left-20">
             <Logo variant="full" />
@@ -257,19 +301,17 @@ const Auth = () => {
                   </div>
                 </div>
 
-                <Button
-                  variant="outline"
-                  className="w-full h-10 sm:h-12 border-primary/20 hover:bg-primary/10 hover:border-primary/30 font-semibold text-sm sm:text-base transition-all"
-                  type="button"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                  </svg>
-                  <span>Continue with Google</span>
-                </Button>
+                {/* --- REAL GOOGLE BUTTON --- */}
+                <div className="flex justify-center w-full">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => toast.error("Google Login Failed")}
+                    theme="filled_blue"
+                    shape="pill"
+                    width="350"
+                    text="continue_with"
+                  />
+                </div>
               </div>
 
               <p className="text-center text-xs sm:text-sm text-muted-foreground mt-4 sm:mt-6">
