@@ -129,6 +129,7 @@ const Dashboard = () => {
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
+      e.preventDefault(); // <--- Added to stop page refresh
       handleSearch();
     }
   };
